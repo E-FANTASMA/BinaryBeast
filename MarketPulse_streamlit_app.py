@@ -37,7 +37,14 @@ import boto3
 import logging
 
 # -------------------- Setup --------------------
-nltk.download('punkt', quiet=True)
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    try:
+        nltk.download('punkt', quiet=True)
+    except:
+        pass
+
 load_dotenv()
 
 # API Keys
@@ -105,14 +112,22 @@ def save_prefs(prefs):
         json.dump(prefs, f)
 
 def summarize_one_line(text):
-    """Basic fallback summarization without AI"""
+    """Basic fallback summarization without NLTK"""
     if not text:
         return "No description available"
-    sents = sent_tokenize(text)
-    for s in sents:
-        if len(s) > 30:
-            return s.strip()[:200]
-    return text[:200]
+    
+    # Simple sentence splitting without NLTK
+    import re
+    sentences = re.split(r'[.!?]+', text)
+    
+    # Find the first substantial sentence
+    for sentence in sentences:
+        clean_sentence = sentence.strip()
+        if len(clean_sentence) > 30:
+            return clean_sentence[:200]
+    
+    # Fallback: return first 200 characters
+    return text.strip()[:200]
 
 def fetch_news_for_asset(asset_symbol, max_articles=3, use_ai_summary=True):
     """Fetch summarized news for a given symbol using NewsAPI with optional AI summarization"""
@@ -235,7 +250,6 @@ if use_ai_summary:
 else:
     st.sidebar.info("Using basic text summarization")
 
-# Theme selection
 # Theme selection
 theme = st.sidebar.radio("🌓 Choose Theme", ["Light", "Dark"])
 
@@ -504,7 +518,6 @@ else:
 col1, col2 = st.columns([2, 3])
 
 # --- LEFT COLUMN: News Feed Section ---
-# --- LEFT COLUMN: News Feed Section ---
 with col1:
     st.markdown("#### 📰 Latest Market News & Insights")
     if use_ai_summary:
@@ -595,7 +608,7 @@ with col2:
         else:
             st.info("No volatility data available.")
  
- # -------------------- Selected Assets Overview --------------------
+# -------------------- Selected Assets Overview --------------------
 st.markdown("### 📋 Selected Assets Overview")
 
 # Create overview table with market direction
@@ -666,8 +679,6 @@ if overview_data:
         
 else:
     st.warning("No asset data available. Please check your internet connection and asset symbols.")
-
-    #======Portfolio section======
 
 # -------------------- Portfolio Tracking --------------------
 st.markdown("## 💼 Portfolio Tracking")
