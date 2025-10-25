@@ -453,86 +453,9 @@ for i, asset in enumerate(selected_assets):
             st.metric(label=asset, value="N/A")
 
 # -------------------- Sentiment Analysis --------------------
-# -------------------- Sentiment Analysis --------------------
 st.markdown("### 🧠 Market Sentiment Analysis")
 
-def simple_sentiment_analysis(text):
-    """Simple word-based sentiment analysis without NLTK"""
-    if not text:
-        return 0.0
-    
-    # Simple positive and negative word lists
-    positive_words = {
-        'good', 'great', 'excellent', 'amazing', 'positive', 'bullish', 'growth',
-        'profit', 'gain', 'rise', 'up', 'high', 'strong', 'buy', 'outperform',
-        'success', 'win', 'benefit', 'opportunity', 'optimistic', 'recovery'
-    }
-    
-    negative_words = {
-        'bad', 'poor', 'terrible', 'negative', 'bearish', 'decline', 'loss',
-        'drop', 'down', 'low', 'weak', 'sell', 'underperform', 'fail',
-        'risk', 'warning', 'caution', 'concern', 'problem', 'volatile'
-    }
-    
-    text_lower = text.lower()
-    words = text_lower.split()
-    
-    positive_count = sum(1 for word in words if word in positive_words)
-    negative_count = sum(1 for word in words if word in negative_words)
-    total_words = len(words)
-    
-    if total_words == 0:
-        return 0.0
-    
-    # Simple sentiment score: (positive - negative) / total_words
-    sentiment_score = (positive_count - negative_count) / total_words
-    return sentiment_score
-
 sentiment_data = []
-
-for asset in selected_assets:
-    news_articles = fetch_news_for_asset(asset, max_articles=3, use_ai_summary=use_ai_summary)
-    if not news_articles:
-        continue
-
-    total_sentiment = 0
-    count = 0
-
-    for article in news_articles:
-        text = article["raw_text"]
-        # Use our simple sentiment analysis instead of TextBlob
-        polarity = simple_sentiment_analysis(text)
-        total_sentiment += polarity
-        count += 1
-
-    if count > 0:
-        avg_sentiment = total_sentiment / count
-        sentiment_data.append({"Asset": asset, "Sentiment": avg_sentiment})
-
-# Convert to DataFrame
-if sentiment_data:
-    sent_df = pd.DataFrame(sentiment_data)
-
-    # Add readable labels
-    sent_df["Mood"] = sent_df["Sentiment"].apply(
-        lambda s: "📈 Positive" if s > 0.02 else ("📉 Negative" if s < -0.02 else "⚖️ Neutral")
-    )
-
-    st.dataframe(sent_df[["Asset", "Mood", "Sentiment"]].round(3))
-
-    # Show chart
-    fig_sent = px.bar(
-        sent_df,
-        x="Asset",
-        y="Sentiment",
-        color="Sentiment",
-        title="🧭 Average News Sentiment per Asset",
-        color_continuous_scale="RdYlGn",
-        height=400
-    )
-    st.plotly_chart(fig_sent, use_container_width=True)
-else:
-    st.info("No sentiment data available yet.")
 
 for asset in selected_assets:
     news_articles = fetch_news_for_asset(asset, max_articles=3, use_ai_summary=use_ai_summary)
