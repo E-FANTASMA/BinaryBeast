@@ -37,7 +37,14 @@ import boto3
 import logging
 
 # -------------------- Setup --------------------
-nltk.download('punkt', quiet=True)
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    try:
+        nltk.download('punkt', quiet=True)
+    except:
+        pass  # Silently fail if download doesn't work
+
 load_dotenv()
 
 # API Keys
@@ -127,14 +134,22 @@ def save_prefs(prefs):
         json.dump(prefs, f)
 
 def summarize_one_line(text):
-    """Basic fallback summarization without AI"""
+    """Basic fallback summarization without NLTK"""
     if not text:
         return "No description available"
-    sents = sent_tokenize(text)
-    for s in sents:
-        if len(s) > 30:
-            return s.strip()[:200]
-    return text[:200]
+    
+    # Simple sentence splitting without NLTK
+    import re
+    sentences = re.split(r'[.!?]+', text)
+    
+    # Find the first substantial sentence
+    for sentence in sentences:
+        clean_sentence = sentence.strip()
+        if len(clean_sentence) > 30:
+            return clean_sentence[:200]
+    
+    # Fallback: return first 200 characters
+    return text.strip()[:200]
 
 def fetch_news_for_asset(asset_symbol, max_articles=3, use_ai_summary=True):
     """Fetch summarized news for a given symbol using NewsAPI with optional AI summarization"""
@@ -845,4 +860,5 @@ if st.session_state.portfolio:
                 st.plotly_chart(fig_pie, use_container_width=True)
             
 else:
+
     st.info("💡 Add investments to your portfolio to track performance!")
